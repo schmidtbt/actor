@@ -19,6 +19,9 @@ class ActorSystem(object):
         ref = self.context.launch_actor(actor_type, *args, **kwargs)
         return ref
 
+    def shutdown(self):
+        self.context.shutdown()
+
 
 class Context(object):
     def __init__(self):
@@ -43,6 +46,9 @@ class Context(object):
         return real_actor.get_ref()
 
     def start(self):
+        pass
+
+    def shutdown(self):
         pass
 
     def send(self, to, msg, sender=None):
@@ -106,23 +112,54 @@ class Actor(object):
         return "{}".format(self.uuid)
 
 
+class ProtocolActor(Actor):
+    __metaclass__ = abc.ABCMeta
+
+    def on_default(self, msg, sender):
+        self.log.debug("Default Protocol Case")
+
+    def receive(self, msg, sender=None):
+        self.log.debug("received: {}".format(msg))
+        Message.validate(msg)
+        try:
+            cmd = msg['cmd']
+            func_name = "on_{}".format(cmd)
+            func_callable = getattr(self, func_name)
+            self.log.debug("receiver calling: {}".format(func_name))
+            func_callable(msg, sender)
+        except AttributeError, err:
+            self.log.error(err)
+            self.log.debug("Defaulting on msg: {}".format(msg))
+            self.on_default(msg, sender)
+
+
+class Message(object):
+    @staticmethod
+    def create(command, data):
+        return {'cmd': command, 'data': data}
+
+    @staticmethod
+    def validate(msg, do_raise=True):
+        if ('cmd' not in msg) | ('data' not in msg):
+            if do_raise:
+                raise MessageException("ill-formed command")
+            else:
+                return False
+        return True
+
+
+class MessageException(Exception):
+    pass
+
+
 class SimpleActor(Actor):
     def receive(self, msg, sender=None):
         self.log.info("Got Msg: {}, from: {}, context: {}".format(msg, sender, self.context))
 
 
-class Ping(Actor):
-    def __init__(self, context, other, *args, **kwargs):
-        super(Ping, self).__init__(context, *args, **kwargs)
-        self.other = other
-
-    def receive(self, msg, sender=None):
-        self.log.info("Got Msg: {}, from: {}, context: {}".format(msg, sender, self.context))
-        self.other.tell("Ping'ing: {}".format(msg), sender=self.get_ref())
-
-
 class ContextException(Exception):
     pass
+
 
 class ActorException(Exception):
     pass

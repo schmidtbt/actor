@@ -18,6 +18,9 @@ class ThreadingContext(Context):
         harness = self.dispatcher(self.queue, self)
         harness.start()
 
+    def shutdown(self):
+        pass
+
     def launch_actor(self, actor_type, *args, **kwargs):
         tqueue = Queue.Queue()
         self.queue.put(('add', actor_type, args, kwargs, tqueue))
@@ -44,6 +47,7 @@ class SingleThreader(threading.Thread):
         self.log = get_logger(self.__class__.__name__)
         self.context = context
         self.actors = {}
+        self.daemon = True
 
     def add_actor(self, actor):
         if actor.uuid in self.actors:
@@ -141,6 +145,7 @@ class UniqueThreader(SingleThreader):
             self.actor = actor
             self.log = get_logger("ThreadedActorHarness")
             self.queue = Queue.Queue()
+            self.daemon = True
 
         def run(self):
             self.log.debug("Starting Harness Execution - {}".format(self.actor.uuid))
@@ -154,8 +159,6 @@ class Mailbox(object):
 
     def __init__(self):
         self.mailbox = Queue.Queue()
-
-
 
 
 

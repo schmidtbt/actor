@@ -9,7 +9,7 @@ class ActorTest(unittest.TestCase):
     def test_actor(self):
         sys = act.ActorSystem("my_sys", context=para.ThreadingContext(dispatcher=para.UniqueThreader))
         ref1 = sys.actor_of(act.SimpleActor, name='ref1')
-        ref2 = sys.actor_of(act.Ping, other=ref1, name='ref2')
+        ref2 = sys.actor_of(act.SimpleActor, name='ref2')
 
         time.sleep(1)
 
@@ -17,6 +17,8 @@ class ActorTest(unittest.TestCase):
         ref2.tell("diff msg")
 
         sys.context.send(ref1, 'from the outside')
+
+        time.sleep(4)
 
 
 if __name__ == '__main__':
