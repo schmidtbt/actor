@@ -9,10 +9,16 @@ class Ping(act.ProtocolActor):
 
     def on_ping(self, msg, sender):
         self.log.debug("starting pong")
-        self.other.tell(g.Message.create('ping', None))
+        self.other.tell(act.Message.create('ping', None))
 
 
 class Pong(act.ProtocolActor):
 
     def on_ping(self, msg, sender):
         self.log.debug("Got Ping -- PONG!!")
+
+
+class PingPonger(g.Node):
+    def on_ping_pong(self, msg, sender):
+        for edge in self.edge_nodes:
+            edge.tell(act.Message.create('ping_pong', msg['data']+1), sender=self.get_ref())

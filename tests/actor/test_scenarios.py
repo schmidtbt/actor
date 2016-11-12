@@ -17,7 +17,21 @@ class ScenarioTestCase(unittest.TestCase):
 
         time.sleep(3)
 
+    def test_pingpong_forever(self):
+        graph = act.ActorSystem("graph", context=para.ThreadingContext(dispatcher=para.UniqueThreader))
 
+        node1 = graph.actor_of(util.PingPonger, name="node1")
+        node2 = graph.actor_of(util.PingPonger, name="node2")
+
+        edge1 = graph.actor_of(g.Edge, name="n1n2", node1=node1, node2=node2)
+
+        edge1.tell(g.Message.create('edge_insert', None))
+
+        time.sleep(1)
+
+        node1.tell(g.Message.create('ping_pong', 0))
+
+        time.sleep(5)
 
 if __name__ == '__main__':
     unittest.main()
